@@ -1,0 +1,16 @@
+43e6944f6121f292b87bc6f788ba8924 *DESCRIPTION
+78e53c48e94bbfd40165648e6f1c0586 *NAMESPACE
+5d765fb089091ff18e9e77c3025701d1 *R/dice_plot.R
+e65dd87a4847365c0bdd6bae188cedd7 *R/domino_plot.R
+a3536c96b5619e50331258d059785055 *R/utils.R
+f1712caf3ffb8b9a41630fb51691807c *man/calculate_dot_size.Rd
+f4566061fc4306b70f82595089fcd1f0 *man/create_custom_legends.Rd
+ce4b68df1be0f87d49d4330b01959556 *man/create_var_positions.Rd
+44cc9a93aaa2c4fb2c502006407e6608 *man/dice_plot.Rd
+51617e3def3d98cda313a22b962507eb *man/domino_plot.Rd
+987d2094649a811e323cf3c160ca52ec *man/order_cat_b.Rd
+2410c62160d1514598af89a0d57557c5 *man/perform_clustering.Rd
+3a2de25d4dbd4087fb7705120adf678a *man/prepare_box_data.Rd
+133e307c13bc846f6e0c81181228f6cc *man/prepare_plot_data.Rd
+11c1a58ea5601c4eb9a94710366ef3ef *tests/test_diceplots.R
+29832e9f71bd41419da78714c5259f6b *tests/test_domino_base.R
