@@ -27,6 +27,9 @@ utils::globalVariables(c(
 #' @param base_height_per_cat_b Used for dynamically scaling the height. Default is 0.3.
 #' @param reverse_ordering Should the cluster ordering be reversed?. Default is FALSE.
 #' @param cat_b_order Do you want to pass an explicit order?. Default is NULL.
+#' @param cluster_by_row Cluster rows, defaults to TRUE
+#' @param cluster_by_column Cluster columns, defaults to TRUE
+#' @param show_legend Do you want to show the legend? Default is TRUE
 #'
 #' @return A ggplot object representing the dice plot.
 #' @importFrom ggplot2 ggplot aes geom_rect geom_point scale_color_manual scale_fill_manual scale_x_discrete scale_y_discrete theme element_text element_blank unit labs coord_fixed ggtitle guides ggsave theme_minimal
@@ -54,8 +57,16 @@ dice_plot <- function(data,
                       base_width_per_cat_a = 0.5,  
                       base_height_per_cat_b = 0.3,
                       reverse_ordering = FALSE,
-                      cat_b_order = NULL
+                      cat_b_order = NULL, # how to add an deprec
+                      cluster_by_row = TRUE,
+                      cluster_by_column = TRUE,
+                      show_legend = TRUE
                       ) {
+  
+  if (!is.null(cat_b_order)) {
+    warning("The argument 'cat_b_order' is deprecated and will be removed in a future version >v1.4. Please use 'clustering_by_row' instead.", 
+            call. = FALSE, immediate. = TRUE)
+  }
   
   num_vars <- length(unique(data[[cat_c]]))
   cat_c_levels = unique(data[[cat_c]])
@@ -143,10 +154,17 @@ dice_plot <- function(data,
   }
   
   # Ensure consistent ordering of factors
-  data[[cat_a]] <- factor(data[[cat_a]], levels = unique(data[[cat_a]]))
-  data[[cat_b]] <- factor(data[[cat_b]], levels = unique(data[[cat_b]]))
-  data[[cat_c]] <- factor(data[[cat_c]], levels = names(cat_c_colors))
+  if(!is.factor(data[[cat_a]])) {
+    data[[cat_a]] <- factor(data[[cat_a]], levels = unique(data[[cat_a]]))
+  }
   
+  if(!is.factor(data[[cat_b]])) {
+    data[[cat_b]] <- factor(data[[cat_b]], levels = unique(data[[cat_b]]))
+  }
+  
+  if(!is.factor(data[[cat_c]])) {
+    data[[cat_c]] <- factor(data[[cat_c]], levels = names(cat_c_colors))
+  }
   if (!is.null(group)) {
     # Check for unique group per cat_b
     group_check <- data %>%
@@ -162,13 +180,17 @@ dice_plot <- function(data,
   
   # Define variable positions dynamically
   var_positions <- create_var_positions(cat_c_colors, num_vars)
-  cat_a_order <- perform_clustering(data, cat_a, cat_b, cat_c)
-  if (!is.null(group) & is.null(cat_b_order)) {
+  
+  if(cluster_by_row){
     cat_b_order <- order_cat_b(data, group, cat_b, group_colors, reverse_ordering)
-  } else if (!is.null(cat_b_order)){
-    cat_b_order = cat_b_order
   } else {
     cat_b_order <- levels(data[[cat_b]])
+  }
+  
+  if(cluster_by_column){
+    cat_a_order <- perform_clustering(data, cat_a, cat_b, cat_c)
+  } else {
+    cat_a_order <- levels(data[[cat_a]])
   }
   
   plot_data <- prepare_plot_data(data, cat_a, cat_b, cat_c, group, var_positions, cat_a_order, cat_b_order)
@@ -219,14 +241,20 @@ dice_plot <- function(data,
     ggtitle(title)
   
   # Add guides based on whether group is provided
-  if (!is.null(group)) {
+  if (!is.null(group) && show_legend) {
     p <- p + guides(fill = "none")
   }
   
-  # Create custom legends only if group is provided
-  if (!is.null(group)) {
-    combined_legend_plot <- create_custom_legends(data, cat_c, group, cat_c_colors, group_colors, var_positions, num_vars, dot_size)
-
+  # Remove legends if show_legend is FALSE
+  if (!show_legend) {
+    p <- p + theme(legend.position = "none")
+  }
+  
+  # Create custom legends only if group is provided and show legend is true
+  if (!is.null(group) && show_legend) {
+    combined_legend_plot <- create_custom_legends(
+      data, cat_c, group, cat_c_colors, group_colors, var_positions, num_vars, dot_size
+    )
     
     # Combine the main plot and legends without 'preserve = "aspect"'
     combined_plot <- ggdraw() +
@@ -243,17 +271,10 @@ dice_plot <- function(data,
         y = (1 - legend_height) / 2,  # Center vertically
         width = legend_width, 
         height = legend_height
-        # Removed preserve = "aspect"
       )
   } else {
     combined_plot <- p
   }
-  
-  # Dynamic Plot Sizing and Saving
-  n_cat_a <- length(unique(plot_data[[cat_a]]))
-  n_cat_b <- length(unique(plot_data[[cat_b]]))
-  total_width <- max(n_cat_a * base_width_per_cat_a + ifelse(!is.null(group), 3, 6), 4)
-  total_height <- max(n_cat_b * base_height_per_cat_b + 3, 4)  
   
   return(combined_plot)
 }
