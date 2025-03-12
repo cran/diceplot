@@ -131,7 +131,7 @@ create_and_plot_dice_varying_counts <- function(pathology_variables, cat_c_color
             custom_theme = theme_minimal(),
             min_dot_size = min_dot_size,
             max_dot_size = max_dot_size,
-            show_legend = TRUE
+            show_legend = show_legend
             )
   
   return(p)
