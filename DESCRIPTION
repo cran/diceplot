@@ -1,7 +1,7 @@
 Package: diceplot
 Title: High Dimensional Categorical Data Visualization
 Description: Easy visualization for datasets with more than two categorical variables and additional continuous variables. 'diceplot' is particularly useful for exploring complex categorical data in the context of pathway analysis across multiple conditions. For a detailed documentation please visit <https://dice-and-domino-plot.readthedocs.io/en/latest/>.
-Version: 0.1.5
+Version: 0.1.6
 Authors@R: 
     person(
       given = "Matthias", 
@@ -18,10 +18,10 @@ Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports: dplyr (>= 1.0.0), ggplot2 (>= 3.5.0), tidyr (>= 1.3.0),
         data.table (>= 1.14.8), cowplot, tibble, stats, rlang,
-        RColorBrewer
+        RColorBrewer, sf
 NeedsCompilation: no
-Packaged: 2025-03-12 09:39:38 UTC; matthiasflo
+Packaged: 2025-03-20 20:33:08 UTC; matthiasflo
 Author: Matthias Flotho [aut, cre] (<https://orcid.org/0009-0006-4374-0801>)
 Maintainer: Matthias Flotho <matthias.flotho@ccb.uni-saarland.de>
 Repository: CRAN
-Date/Publication: 2025-03-12 09:50:02 UTC
+Date/Publication: 2025-03-20 20:50:02 UTC

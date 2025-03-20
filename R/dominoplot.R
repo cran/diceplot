@@ -1,4 +1,4 @@
-utils::globalVariables(c("label_x", "label_y", "adj_logfc", "feature_id", "gene_index", "celltype_numeric", "x_offset", "y_offset", "aes", "case_when"))
+utils::globalVariables(c("label_x", "label_y", "adj_logfc", "feature_id", "gene_index", "celltype_numeric","mean_logfc", "x_offset", "y_offset", "aes", "case_when"))
 
 #' Domino Plot Visualization
 #'
@@ -6,68 +6,89 @@ utils::globalVariables(c("label_x", "label_y", "adj_logfc", "feature_id", "gene_
 #'
 #' @param data A data frame containing gene expression data.
 #' @param gene_list A character vector of gene names to include in the plot.
-#' @param switch_axis A logical value indicating whether to switch the x and y axes. Default is `FALSE`.
-#' @param min_dot_size A numeric value indicating the minimum dot size in the plot. Default is `1`.
-#' @param max_dot_size A numeric value indicating the maximum dot size in the plot. Default is `5`.
-#' @param spacing_factor A numeric value indicating the spacing between gene pairs. Default is `3`.
-#' @param var_id A string representing the column name in `data` for the variable identifier. Default is `"var"`.
 #' @param x A string representing the column name in `data` for the feature variable (e.g., genes). Default is `"gene"`.
 #' @param y A string representing the column name in `data` for the cell type variable. Default is `"Celltype"`.
 #' @param contrast A string representing the column name in `data` for the contrast variable. Default is `"Contrast"`.
-#' @param contrast_levels A character vector specifying the levels of the contrast variable. Default is `c("Clinical", "Pathological")`.
-#' @param contrast_labels A character vector specifying the labels for the contrasts in the plot. Default is `c("Clinical", "Pathological")`.
+#' @param var_id A string representing the column name in `data` for the variable identifier. Default is `"var"`.
 #' @param log_fc A string representing the column name in `data` for the log fold change values. Default is `"avg_log2FC"`.
 #' @param p_val A string representing the column name in `data` for the adjusted p-values. Default is `"p_val_adj"`.
-#' @param logfc_limits A numeric vector of length 2 specifying the limits for the log fold change color scale. Default is `c(-1.5, 1.5)`.
+#' @param min_dot_size A numeric value indicating the minimum dot size in the plot. Default is `1`.
+#' @param max_dot_size A numeric value indicating the maximum dot size in the plot. Default is `5`.
+#' @param spacing_factor A numeric value indicating the spacing between gene pairs. Default is `3`.
 #' @param logfc_colors A named vector specifying the colors for the low, mid, and high values in the color scale. Default is `c(low = "blue", mid = "white", high = "red")`.
 #' @param color_scale_name A string specifying the name of the color scale in the legend. Default is `"Log2 Fold Change"`.
 #' @param size_scale_name A string specifying the name of the size scale in the legend. Default is `"-log10(adj. p-value)"`.
 #' @param axis_text_size A numeric value specifying the size of the axis text. Default is `8`.
-#' @param aspect_ratio A numeric value specifying the aspect ratio of the plot. If `NULL`, it's calculated automatically. Default is `NULL`.
+#' @param x_axis_text_size A numeric value specifying the size of the x-axis text. If NULL, uses `axis_text_size`. Default is `NULL`.
+#' @param y_axis_text_size A numeric value specifying the size of the y-axis text. If NULL, uses `axis_text_size`. Default is `NULL`.
+#' @param legend_text_size A numeric value specifying the size of the legend text. Default is `8`.
+#' @param cluster_method The clustering method to use. Default is `"complete"`.
+#' @param cluster_y_axis A logical value indicating whether to cluster the y-axis (cell types). Default is `TRUE`.
+#' @param cluster_var_id A logical value indicating whether to cluster the var_id. Default is `TRUE`.
 #' @param base_width A numeric value specifying the base width for saving the plot. Default is `5`.
 #' @param base_height A numeric value specifying the base height for saving the plot. Default is `4`.
+#' @param show_legend A logical value indicating whether to show the legend. Default is `TRUE`.
+#' @param legend_width A numeric value specifying the relative width of the legend. Default is `0.25`.
+#' @param legend_height A numeric value specifying the relative height of the legend. Default is `0.5`.
+#' @param custom_legend A logical value indicating whether to use a custom legend. Default is `TRUE`.
+#' @param logfc_limits A numeric vector of length 2 specifying the limits for the log fold change color scale. If `NULL` (default), no limits are applied.
+#' @param aspect_ratio A numeric value specifying the aspect ratio of the plot. If `NULL`, it's calculated automatically. Default is `NULL`.
+#' @param switch_axis A logical value indicating whether to switch the x and y axes. Default is `FALSE`.
+#' @param reverse_y_ordering A logical value indicating whether to reverse the y-axis ordering after clustering. Default is `FALSE`.
+#' @param show_var_positions A logical value indicating whether to show the intermediate variable positions plot. Default is `FALSE`.
+#'   When `output_file` is specified with a PDF extension, both plots will be saved to a multi-page PDF if this is `TRUE`.
+#'   A warning will be shown if `show_var_positions` is `TRUE` but the output file is not a PDF.
 #' @param output_file An optional string specifying the path to save the plot. If `NULL`, the plot is not saved. Default is `NULL`.
-#' @param cluster_method The clustering method to use. Default is `"complete"`.
 #' @param feature_col Deprecated. Use `x` instead.
 #' @param celltype_col Deprecated. Use `y` instead.
 #' @param contrast_col Deprecated. Use `contrast` instead.
 #' @param logfc_col Deprecated. Use `log_fc` instead.
 #' @param pval_col Deprecated. Use `p_val` instead.
 #'
-#' @return A ggplot object representing the domino plot.
+#' @return A list containing the domino plot and optionally the variable positions plot.
 #' @importFrom ggplot2 ggplot aes geom_point geom_rect scale_color_manual scale_fill_manual theme_void theme element_text element_blank margin coord_fixed geom_text ggtitle
-#' @importFrom cowplot plot_grid
+#' @importFrom cowplot plot_grid ggdraw draw_plot
 #' @importFrom stats dist hclust
 #' @importFrom utils globalVariables
 #' @importFrom rlang sym
 #' @importFrom ggplot2 ggplot aes geom_rect geom_point scale_color_gradient2 scale_size_continuous scale_x_continuous expansion scale_y_continuous labs theme_minimal theme element_text element_line element_blank element_rect annotate coord_flip coord_cartesian ggsave
 #' @importFrom dplyr select mutate filter left_join arrange desc bind_rows case_when
 #' @importFrom utils globalVariables
+#' @importFrom grDevices pdf dev.off
 #' @export
 domino_plot <- function(data, 
                         gene_list, 
-                        switch_axis = FALSE, 
-                        min_dot_size = 1, 
-                        max_dot_size = 5, 
-                        spacing_factor = 3,
-                        var_id = "var",
                         x = "gene",
                         y = "Celltype",
                         contrast = "Contrast",
-                        contrast_levels = c("Clinical", "Pathological"),
-                        contrast_labels = c("Clinical", "Pathological"),
+                        var_id = "var",
                         log_fc = "avg_log2FC",
                         p_val = "p_val_adj",
-                        logfc_limits = c(-1.5, 1.5),
+                        min_dot_size = 1, 
+                        max_dot_size = 5, 
+                        spacing_factor = 3,
                         logfc_colors = c(low = "blue", mid = "white", high = "red"),
                         color_scale_name = "Log2 Fold Change",
                         size_scale_name = "-log10(adj. p-value)",
                         axis_text_size = 8,
-                        aspect_ratio = NULL,
+                        x_axis_text_size = NULL,
+                        y_axis_text_size = NULL,
+                        legend_text_size = 8,
+                        cluster_method = "complete",
+                        cluster_y_axis = TRUE,
+                        cluster_var_id = TRUE,
                         base_width = 5,
                         base_height = 4,
+                        show_legend = TRUE,
+                        legend_width = 0.25,
+                        legend_height = 0.5,
+                        custom_legend = TRUE,
+                        logfc_limits = NULL,
+                        aspect_ratio = NULL,
+                        switch_axis = FALSE,
+                        reverse_y_ordering = FALSE,
+                        show_var_positions = FALSE,
                         output_file = NULL,
-                        cluster_method = "complete",
                         feature_col = NULL,
                         celltype_col = NULL,
                         contrast_col = NULL,
@@ -105,26 +126,32 @@ domino_plot <- function(data,
     p_val <- pval_col
   }
   
-  if (length(unique(data[[contrast]])) != 2){
+  # Set axis text sizes if NULL
+  if (is.null(x_axis_text_size)) {
+    x_axis_text_size <- axis_text_size
+  }
+  
+  if (is.null(y_axis_text_size)) {
+    y_axis_text_size <- axis_text_size
+  }
+  
+  # Get unique contrast levels from the data
+  contrast_levels <- unique(data[[contrast]])
+  
+  if (length(contrast_levels) != 2){
     warning("Only two contrast levels are supported right now", 
             call. = FALSE, immediate. = TRUE)
     return()
   }
   
-  if (!is.null(contrast_levels)) {
-    warning("The argument 'contrast_levels' is deprecated and will be removed in a future version >v1.5", 
-            call. = FALSE, immediate. = TRUE)
-  } 
-  if (!is.null(contrast_labels)) {
-    warning("The argument 'contrast_labels' is deprecated and will be removed in a future version >v1.5", 
-            call. = FALSE, immediate. = TRUE)
-  }
+  # Use the actual contrast levels from the data for labels
+  contrast_labels <- contrast_levels
   
   if(!x %in% colnames(data)) {
     data$gene <- rownames(data)
   }
   
-  data[[contrast]] <- factor(data[[contrast]], levels = unique(data[[contrast]]))
+  data[[contrast]] <- factor(data[[contrast]], levels = contrast_levels)
   
   if(!x %in% colnames(data)) {
     warning("feature column not present!", 
@@ -132,56 +159,126 @@ domino_plot <- function(data,
     return()
   }
   
-  cluster_data <- data %>%
-    # Select the columns we need
-    select(!!sym(var_id), !!sym(y), !!sym(contrast), !!sym(x), !!sym(log_fc)) %>%
-    # Handle NAs in logFC by replacing with 0 (or another appropriate value)
-    mutate(!!sym(log_fc) := ifelse(is.na(!!sym(log_fc)), 0, !!sym(log_fc)))
-  
-  # For each var_id, create a feature vector combining all genes, celltypes, and contrasts
-  # This gives us a "profile" for each variable that we can cluster
-  cluster_matrix <- cluster_data %>%
-    # Create a unique identifier for each gene-celltype-contrast combination
-    mutate(feature_id = paste(!!sym(x), !!sym(y), !!sym(contrast), sep = "_")) %>%
-    # Pivot to wide format with var_id as rows and feature combinations as columns
-    tidyr::pivot_wider(
-      id_cols = !!sym(var_id),
-      names_from = feature_id,
-      values_from = !!sym(log_fc),
-      values_fill = 0
-    )
-  
-  # Extract the matrix for clustering (everything except the var_id column)
-  if(ncol(cluster_matrix) <= 1) {
-    warning("Not enough data for clustering", call. = FALSE, immediate. = TRUE)
-    return()
-  }
-  
-  cluster_var_ids <- cluster_matrix[[var_id]]
-  cluster_matrix_values <- as.matrix(cluster_matrix[, -1])
-  rownames(cluster_matrix_values) <- cluster_var_ids
-  
-  # Compute distance matrix
-  dist_matrix <- dist(cluster_matrix_values)
-  
-  # Perform hierarchical clustering
-  hc <- hclust(dist_matrix, method = cluster_method)
-  
-  # Get the ordering from the dendrogram
-  var_order <- cluster_var_ids[hc$order]
-  
-  # Update the var_id factor in the original data to reflect the clustering order
-  data[[var_id]] <- factor(data[[var_id]], levels = var_order)
-  
-  
+  # Filter data to only include genes in gene_list before clustering
   data <- data %>% filter(!!sym(x) %in% gene_list)
   
-  all_celltypes <- unique(data[[y]])
+  # Implement cell type (y-axis) clustering if requested
+  if (cluster_y_axis) {
+    # Create a profile matrix for each cell type with gene-contrast combinations
+    celltype_profile_matrix <- data %>%
+      # Handle NAs in log fold change by replacing with 0
+      mutate(!!sym(log_fc) := ifelse(is.na(!!sym(log_fc)), 0, !!sym(log_fc))) %>%
+      # Create a unique identifier for each gene-contrast combination
+      mutate(feature_id = paste(!!sym(x), !!sym(contrast), sep = "_")) %>%
+      # Group by y value and feature_id
+      group_by(!!sym(y), feature_id) %>%
+      # Calculate the mean log fold change for each y-feature combination
+      summarise(mean_logfc = mean(!!sym(log_fc), na.rm = TRUE), .groups = "drop") %>%
+      # Pivot to wide format with y values as rows and feature combinations as columns
+      tidyr::pivot_wider(
+        id_cols = !!sym(y),
+        names_from = feature_id,
+        values_from = mean_logfc,
+        values_fill = 0
+      )
+    
+    # Extract row names for y categories
+    celltype_categories <- celltype_profile_matrix[[y]]
+    
+    # Remove the y column to get just the numeric matrix
+    celltype_profile_matrix <- as.matrix(celltype_profile_matrix[, -1])
+    rownames(celltype_profile_matrix) <- celltype_categories
+    
+    # Compute distance matrix
+    dist_matrix <- dist(celltype_profile_matrix)
+    
+    # Perform hierarchical clustering
+    hc <- hclust(dist_matrix, method = cluster_method)
+    
+    # Get the ordering from the dendrogram
+    y_order <- celltype_categories[hc$order]
+    
+    # Reverse the order if requested
+    if (reverse_y_ordering) {
+      y_order <- rev(y_order)
+    }
+    
+    # Set the ordered levels for the y factor
+    all_celltypes <- y_order
+    
+    # Ensure celltype is a factor with the clustered order
+    data[[y]] <- factor(data[[y]], levels = all_celltypes)
+  } else {
+    # Check if y is already a factor
+    if (is.factor(data[[y]])) {
+      # If it's already a factor, keep its levels
+      all_celltypes <- levels(data[[y]])
+    } else {
+      # If not a factor, convert it to factor with default ordering
+      all_celltypes <- unique(data[[y]])
+      data[[y]] <- factor(data[[y]], levels = all_celltypes)
+    }
+  }
+  
   # Ensure celltype is a factor for proper ordering
   data[[y]] <- factor(data[[y]], levels = all_celltypes)
   
+  # Handle var_id clustering or factorization
+  if (cluster_var_id) {
+    # Cluster var_id based on their profiles
+    cluster_data <- data %>%
+      # Select the columns we need
+      select(!!sym(var_id), !!sym(y), !!sym(contrast), !!sym(x), !!sym(log_fc)) %>%
+      # Handle NAs in logFC by replacing with 0 (or another appropriate value)
+      mutate(!!sym(log_fc) := ifelse(is.na(!!sym(log_fc)), 0, !!sym(log_fc)))
+    
+    # For each var_id, create a feature vector combining all genes, celltypes, and contrasts
+    # This gives us a "profile" for each variable that we can cluster
+    cluster_matrix <- cluster_data %>%
+      # Create a unique identifier for each gene-celltype-contrast combination
+      mutate(feature_id = paste(!!sym(x), !!sym(y), !!sym(contrast), sep = "_")) %>%
+      # Pivot to wide format with var_id as rows and feature combinations as columns
+      tidyr::pivot_wider(
+        id_cols = !!sym(var_id),
+        names_from = feature_id,
+        values_from = !!sym(log_fc),
+        values_fill = 0
+      )
+    
+    # Extract the matrix for clustering (everything except the var_id column)
+    if(ncol(cluster_matrix) <= 1) {
+      warning("Not enough data for clustering", call. = FALSE, immediate. = TRUE)
+      return()
+    }
+    
+    cluster_var_ids <- cluster_matrix[[var_id]]
+    cluster_matrix_values <- as.matrix(cluster_matrix[, -1])
+    rownames(cluster_matrix_values) <- cluster_var_ids
+    
+    # Compute distance matrix
+    dist_matrix <- dist(cluster_matrix_values)
+    
+    # Perform hierarchical clustering
+    hc <- hclust(dist_matrix, method = cluster_method)
+    
+    # Get the ordering from the dendrogram
+    var_order <- cluster_var_ids[hc$order]
+    
+    # Update the var_id factor in the original data to reflect the clustering order
+    data[[var_id]] <- factor(data[[var_id]], levels = var_order)
+  } else {
+    # Check if var_id is already a factor
+    if (is.factor(data[[var_id]])) {
+      # If it's already a factor, keep its levels
+      # No need to do anything
+    } else {
+      # If not a factor, convert it to factor with default ordering
+      data[[var_id]] <- factor(data[[var_id]], levels = unique(data[[var_id]]))
+    }
+  }
+  
   all_contrasts <- contrast_levels
-  all_vars <- unique(data[[var_id]])
+  all_vars <- levels(data[[var_id]])
   
   complete_data <- expand.grid(
     temp_gene = gene_list,
@@ -201,16 +298,15 @@ domino_plot <- function(data,
   
   # Create named lists for var_positions
   var_list_left <- setNames(
-    as.list(unique(data[[var_id]][data[[contrast]] == unique(data[[contrast]])[1]])),
-    unique(data[[var_id]][data[[contrast]] == unique(data[[contrast]])[1]])
+    as.list(unique(data[[var_id]][data[[contrast]] == contrast_levels[1]])),
+    unique(data[[var_id]][data[[contrast]] == contrast_levels[1]])
   )
   
   var_list_right <- setNames(
-    as.list(unique(data[[var_id]][data[[contrast]] == unique(data[[contrast]])[2]])),
-    unique(data[[var_id]][data[[contrast]] == unique(data[[contrast]])[2]])
+    as.list(unique(data[[var_id]][data[[contrast]] == contrast_levels[2]])),
+    unique(data[[var_id]][data[[contrast]] == contrast_levels[2]])
   )
   
-  # Assuming create_var_positions is defined elsewhere in your code
   # Generate variable positions using named lists
   var_positions_left <- create_var_positions(
     var_list_left, 
@@ -232,16 +328,25 @@ domino_plot <- function(data,
       x_offset = 2 + x_offset 
     )
   
-  spacing_factor <- 3
   var_positions <- dplyr::bind_rows(var_positions_left, var_positions_right)
   
-  mini_plot <- ggplot(var_positions, aes(x = "x_offset", y = "y_offset", 
-                                                label = var_id, color = contrast)) +
-    geom_point() +
-    geom_text(nudge_x = 0.05, nudge_y = 0.05, size = 3) +
+  # Create the variable positions plot
+  var_pos_plot <- ggplot(var_positions, aes(x = x_offset, y = y_offset)) +
+    geom_point(size = 5) +
+    geom_text(aes(label = !!sym(var_id)), hjust = -0.3, vjust = 0) +
+    scale_color_manual(values = c(var_list_left, var_list_right)) +
     theme_minimal() +
-    labs(title = "Dice Arrangement in var Positions", x = "x_offset", y = "y_offset")
-  print(mini_plot)
+    labs(
+      title = "Variable Positions Visualization",
+      subtitle = "Showing positions for two groups with variables",
+      x = "X Position",
+      y = "Y Position"
+    ) +
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = legend_text_size)
+    ) +
+    coord_fixed()
   
   # Here we join the position information
   plot_data <- data %>%
@@ -262,7 +367,12 @@ domino_plot <- function(data,
   
   plot_data <- plot_data %>%
     mutate(
-      adj_logfc = pmax(pmin(!!sym(log_fc), logfc_limits[2]), logfc_limits[1]),
+      # Only adjust logfc if limits are provided
+      adj_logfc = if(is.null(logfc_limits)) {
+        !!sym(log_fc)
+      } else {
+        pmax(pmin(!!sym(log_fc), logfc_limits[2]), logfc_limits[1])
+      },
       log_p_val_adj = -log10(!!sym(p_val))
     )
   
@@ -283,17 +393,29 @@ domino_plot <- function(data,
         ymin = celltype_numeric - 0.4,  # Use the numeric value directly
         ymax = celltype_numeric + 0.4   # Use the numeric value directly
       ),
-      fill = "white", color = "black", alpha = 0.5, linewidth = 0.5
+      fill = "white", color = "darkgrey", alpha = 0.5, linewidth = 0.5
     ) +
     geom_point(aes(color = adj_logfc, size = log_p_val_adj)) +
     geom_point(aes(size = log_p_val_adj), color = "black", shape = 1) + 
-    scale_color_gradient2(
-      name = color_scale_name,
-      low = logfc_colors["low"],
-      mid = logfc_colors["mid"],
-      high = logfc_colors["high"],
-      limits = logfc_limits
-    ) +
+    {
+      # Create color scale with or without limits based on logfc_limits
+      if(is.null(logfc_limits)) {
+        scale_color_gradient2(
+          name = color_scale_name,
+          low = logfc_colors["low"],
+          mid = logfc_colors["mid"],
+          high = logfc_colors["high"]
+        )
+      } else {
+        scale_color_gradient2(
+          name = color_scale_name,
+          low = logfc_colors["low"],
+          mid = logfc_colors["mid"],
+          high = logfc_colors["high"],
+          limits = logfc_limits
+        )
+      }
+    } +
     scale_size_continuous(name = size_scale_name, range = c(min_dot_size, max_dot_size)) +
     scale_x_continuous(
       breaks = seq(1.5, by = spacing_factor, length.out = length(gene_list)),
@@ -309,11 +431,12 @@ domino_plot <- function(data,
     labs(x = "", y = "") +
     theme_minimal() +
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1),
-      axis.text.y = element_text(size = axis_text_size),
+      axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1, size = x_axis_text_size),
+      axis.text.y = element_text(size = y_axis_text_size),
+      legend.text = element_text(size = legend_text_size),
+      legend.title = element_text(size = legend_text_size + 1),
       panel.grid.major = element_line(color = "grey90"),
       panel.grid.minor = element_blank(),
-      legend.position = "right",
       strip.background = element_rect(fill = "lightgrey"),
       strip.text = element_text(face = "bold"),
       aspect.ratio = aspect_ratio
@@ -322,29 +445,131 @@ domino_plot <- function(data,
              x = seq(1, by = spacing_factor, length.out = length(gene_list)), 
              y = n_celltypes + 1, 
              label = contrast_labels[1], 
-             angle = 90, hjust = 0, size = 3) +
+             angle = 90, hjust = 0, size = x_axis_text_size/3) +
     annotate("text", 
              x = seq(2, by = spacing_factor, length.out = length(gene_list)), 
              y = n_celltypes + 1, 
              label = contrast_labels[2], 
-             angle = 90, hjust = 0, size = 3)
+             angle = 90, hjust = 0, size = x_axis_text_size/3)
   
-  print(p)
   if (switch_axis) {
     p <- p + coord_flip()
   } else {
     p <- p + coord_cartesian(clip = "off")
   }
   
-  if (!is.null(output_file)) {
-    n_genes <- length(gene_list)
-    n_celltypes <- length(unique(plot_data[[y]]))
-    width <- base_width + (n_genes * 0.5)
-    height <- base_height + (n_celltypes * 0.2)
-    width <- max(width, base_width)  
-    height <- max(height, base_height)  
-    ggsave(output_file, plot = p, width = width, height = height, dpi = 300)
+  legend_var_positions <- create_var_positions(var_list_left, length(var_list_left)) %>%
+    mutate(!!sym(var_id) := names(var_list_left),
+           !!sym(contrast) := contrast_levels[1])
+  
+  # Handle legend display
+  if (show_legend && custom_legend) {
+    # Create custom legends
+    # Create custom legends, handling the case where logfc_limits is NULL
+    if(is.null(logfc_limits)) {
+      # If no limits are specified, use the range of actual data
+      data_range <- range(plot_data$adj_logfc, na.rm = TRUE)
+      custom_legend_plot <- create_custom_domino_legends(
+        contrast_levels = contrast_labels,
+        var_positions = legend_var_positions,
+        var_id = var_id,
+        contrast = contrast,
+        logfc_colors = logfc_colors,
+        logfc_limits = data_range,
+        color_scale_name = color_scale_name,
+        size_scale_name = size_scale_name,
+        min_dot_size = min_dot_size,
+        max_dot_size = max_dot_size,
+        legend_text_size = legend_text_size
+      )
+    } else {
+      custom_legend_plot <- create_custom_domino_legends(
+        contrast_levels = contrast_labels,
+        var_positions = legend_var_positions,
+        var_id = var_id,
+        contrast = contrast,
+        logfc_colors = logfc_colors,
+        logfc_limits = logfc_limits,
+        color_scale_name = color_scale_name,
+        size_scale_name = size_scale_name,
+        min_dot_size = min_dot_size,
+        max_dot_size = max_dot_size,
+        legend_text_size = legend_text_size
+      )
+    }
+    
+    # Hide the default legends from the main plot
+    p <- p + theme(legend.position = "none")
+    
+    # Combine the main plot and custom legends
+    final_plot <- cowplot::ggdraw() +
+      cowplot::draw_plot(
+        p, 
+        x = 0, 
+        y = 0, 
+        width = 1 - legend_width, 
+        height = 1
+      ) +
+      cowplot::draw_plot(
+        custom_legend_plot, 
+        x = 1 - legend_width, 
+        y = (1 - legend_height) / 2,  # Center vertically
+        width = legend_width, 
+        height = legend_height
+      )
+  } else if (show_legend && !custom_legend) {
+    # Use default legends
+    final_plot <- p
+  } else {
+    # No legends
+    final_plot <- p + theme(legend.position = "none")
   }
   
-  p
+  # Calculate dimensions for saving
+  n_genes <- length(gene_list)
+  n_celltypes <- length(unique(plot_data[[y]]))
+  width <- base_width + (n_genes)
+  height <- base_height + (n_celltypes * 0.5)
+  width <- max(width, base_width)  
+  height <- max(height, base_height)  
+  
+  # If showing legend, adjust width to accommodate it
+  if(show_legend ) {
+    width <- width / (1 - legend_width)
+  }
+  
+  # Save plots as requested
+  if (!is.null(output_file)) {
+    # Check if output_file has a PDF extension for multi-page support
+    is_pdf <- tolower(tools::file_ext(output_file)) == "pdf"
+    
+    if (show_var_positions && !is_pdf) {
+      warning("The show_var_positions=TRUE option is only fully supported with PDF output files. ",
+              "Only the main plot will be saved to '", output_file, "'. ",
+              "Use a .pdf extension to save both plots in a multi-page document.",
+              call. = FALSE, immediate. = TRUE)
+      
+      # Save just the main plot to the non-PDF file
+      ggsave(output_file, plot = final_plot, width = width, height = height, dpi = 300)
+    } else if (is_pdf && show_var_positions) {
+      # Let the user know we're saving a multi-page PDF
+      message("Saving both plots to a multi-page PDF: ", output_file)
+      
+      # Open PDF device
+      grDevices::pdf(output_file, width = width, height = height)
+      print(final_plot)
+      print(var_pos_plot)
+      grDevices::dev.off()
+    } else {
+      # Regular single plot output
+      ggsave(output_file, plot = final_plot, width = width, height = height, dpi = 300)
+    }
+  }
+  
+  # Return the plots in a list
+  result <- list(domino_plot = final_plot)
+  if (show_var_positions) {
+    result$var_positions_plot <- var_pos_plot
+  }
+  return(result)
 }

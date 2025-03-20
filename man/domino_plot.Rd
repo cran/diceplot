@@ -7,28 +7,37 @@
 domino_plot(
   data,
   gene_list,
-  switch_axis = FALSE,
-  min_dot_size = 1,
-  max_dot_size = 5,
-  spacing_factor = 3,
-  var_id = "var",
   x = "gene",
   y = "Celltype",
   contrast = "Contrast",
-  contrast_levels = c("Clinical", "Pathological"),
-  contrast_labels = c("Clinical", "Pathological"),
+  var_id = "var",
   log_fc = "avg_log2FC",
   p_val = "p_val_adj",
-  logfc_limits = c(-1.5, 1.5),
+  min_dot_size = 1,
+  max_dot_size = 5,
+  spacing_factor = 3,
   logfc_colors = c(low = "blue", mid = "white", high = "red"),
   color_scale_name = "Log2 Fold Change",
   size_scale_name = "-log10(adj. p-value)",
   axis_text_size = 8,
-  aspect_ratio = NULL,
+  x_axis_text_size = NULL,
+  y_axis_text_size = NULL,
+  legend_text_size = 8,
+  cluster_method = "complete",
+  cluster_y_axis = TRUE,
+  cluster_var_id = TRUE,
   base_width = 5,
   base_height = 4,
+  show_legend = TRUE,
+  legend_width = 0.25,
+  legend_height = 0.5,
+  custom_legend = TRUE,
+  logfc_limits = NULL,
+  aspect_ratio = NULL,
+  switch_axis = FALSE,
+  reverse_y_ordering = FALSE,
+  show_var_positions = FALSE,
   output_file = NULL,
-  cluster_method = "complete",
   feature_col = NULL,
   celltype_col = NULL,
   contrast_col = NULL,
@@ -41,31 +50,23 @@ domino_plot(
 
 \item{gene_list}{A character vector of gene names to include in the plot.}
 
-\item{switch_axis}{A logical value indicating whether to switch the x and y axes. Default is \code{FALSE}.}
-
-\item{min_dot_size}{A numeric value indicating the minimum dot size in the plot. Default is \code{1}.}
-
-\item{max_dot_size}{A numeric value indicating the maximum dot size in the plot. Default is \code{5}.}
-
-\item{spacing_factor}{A numeric value indicating the spacing between gene pairs. Default is \code{3}.}
-
-\item{var_id}{A string representing the column name in \code{data} for the variable identifier. Default is \code{"var"}.}
-
 \item{x}{A string representing the column name in \code{data} for the feature variable (e.g., genes). Default is \code{"gene"}.}
 
 \item{y}{A string representing the column name in \code{data} for the cell type variable. Default is \code{"Celltype"}.}
 
 \item{contrast}{A string representing the column name in \code{data} for the contrast variable. Default is \code{"Contrast"}.}
 
-\item{contrast_levels}{A character vector specifying the levels of the contrast variable. Default is \code{c("Clinical", "Pathological")}.}
-
-\item{contrast_labels}{A character vector specifying the labels for the contrasts in the plot. Default is \code{c("Clinical", "Pathological")}.}
+\item{var_id}{A string representing the column name in \code{data} for the variable identifier. Default is \code{"var"}.}
 
 \item{log_fc}{A string representing the column name in \code{data} for the log fold change values. Default is \code{"avg_log2FC"}.}
 
 \item{p_val}{A string representing the column name in \code{data} for the adjusted p-values. Default is \code{"p_val_adj"}.}
 
-\item{logfc_limits}{A numeric vector of length 2 specifying the limits for the log fold change color scale. Default is \code{c(-1.5, 1.5)}.}
+\item{min_dot_size}{A numeric value indicating the minimum dot size in the plot. Default is \code{1}.}
+
+\item{max_dot_size}{A numeric value indicating the maximum dot size in the plot. Default is \code{5}.}
+
+\item{spacing_factor}{A numeric value indicating the spacing between gene pairs. Default is \code{3}.}
 
 \item{logfc_colors}{A named vector specifying the colors for the low, mid, and high values in the color scale. Default is \code{c(low = "blue", mid = "white", high = "red")}.}
 
@@ -75,15 +76,43 @@ domino_plot(
 
 \item{axis_text_size}{A numeric value specifying the size of the axis text. Default is \code{8}.}
 
-\item{aspect_ratio}{A numeric value specifying the aspect ratio of the plot. If \code{NULL}, it's calculated automatically. Default is \code{NULL}.}
+\item{x_axis_text_size}{A numeric value specifying the size of the x-axis text. If NULL, uses \code{axis_text_size}. Default is \code{NULL}.}
+
+\item{y_axis_text_size}{A numeric value specifying the size of the y-axis text. If NULL, uses \code{axis_text_size}. Default is \code{NULL}.}
+
+\item{legend_text_size}{A numeric value specifying the size of the legend text. Default is \code{8}.}
+
+\item{cluster_method}{The clustering method to use. Default is \code{"complete"}.}
+
+\item{cluster_y_axis}{A logical value indicating whether to cluster the y-axis (cell types). Default is \code{TRUE}.}
+
+\item{cluster_var_id}{A logical value indicating whether to cluster the var_id. Default is \code{TRUE}.}
 
 \item{base_width}{A numeric value specifying the base width for saving the plot. Default is \code{5}.}
 
 \item{base_height}{A numeric value specifying the base height for saving the plot. Default is \code{4}.}
 
-\item{output_file}{An optional string specifying the path to save the plot. If \code{NULL}, the plot is not saved. Default is \code{NULL}.}
+\item{show_legend}{A logical value indicating whether to show the legend. Default is \code{TRUE}.}
 
-\item{cluster_method}{The clustering method to use. Default is \code{"complete"}.}
+\item{legend_width}{A numeric value specifying the relative width of the legend. Default is \code{0.25}.}
+
+\item{legend_height}{A numeric value specifying the relative height of the legend. Default is \code{0.5}.}
+
+\item{custom_legend}{A logical value indicating whether to use a custom legend. Default is \code{TRUE}.}
+
+\item{logfc_limits}{A numeric vector of length 2 specifying the limits for the log fold change color scale. If \code{NULL} (default), no limits are applied.}
+
+\item{aspect_ratio}{A numeric value specifying the aspect ratio of the plot. If \code{NULL}, it's calculated automatically. Default is \code{NULL}.}
+
+\item{switch_axis}{A logical value indicating whether to switch the x and y axes. Default is \code{FALSE}.}
+
+\item{reverse_y_ordering}{A logical value indicating whether to reverse the y-axis ordering after clustering. Default is \code{FALSE}.}
+
+\item{show_var_positions}{A logical value indicating whether to show the intermediate variable positions plot. Default is \code{FALSE}.
+When \code{output_file} is specified with a PDF extension, both plots will be saved to a multi-page PDF if this is \code{TRUE}.
+A warning will be shown if \code{show_var_positions} is \code{TRUE} but the output file is not a PDF.}
+
+\item{output_file}{An optional string specifying the path to save the plot. If \code{NULL}, the plot is not saved. Default is \code{NULL}.}
 
 \item{feature_col}{Deprecated. Use \code{x} instead.}
 
@@ -96,7 +125,7 @@ domino_plot(
 \item{pval_col}{Deprecated. Use \code{p_val} instead.}
 }
 \value{
-A ggplot object representing the domino plot.
+A list containing the domino plot and optionally the variable positions plot.
 }
 \description{
 This function generates a plot to visualize gene expression levels for a given list of genes. The size of the dots can be customized, and the plot can be saved to an output file if specified.
