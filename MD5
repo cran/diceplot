@@ -1,9 +1,9 @@
-df1dff544f470877a0d39f5bf0d430b4 *DESCRIPTION
+24ecc2252764ec7c129f5afee58db648 *DESCRIPTION
 465b33f31343f3cba729c7becc9b1204 *LICENSE
-cb902d58918df4226852ed1aafafbfd6 *NAMESPACE
-b21a0804b9e63e8e737c7529a8134c4e *R/diceplot.R
+8c63d30d7339cb58f21f0b4f221cebe1 *NAMESPACE
+82aa89c3533931ee384921b614a641c8 *R/diceplot.R
 b18804935c246ebdf346726a72841fb8 *R/dominoplot.R
-1f3ec65017abad581d57453f7ee876a1 *R/utils.R
+ac1eefda7f62ebb6bbdd79e25af4eeb8 *R/utils.R
 b24997eafcaa376156bc8deb363f8ba6 *inst/CITATION
 edfbec3c6769ea7c3777cb0458ce09a2 *man/calculate_dot_size.Rd
 5655bb42ceaf0b65450c81c5e4e07cd0 *man/create_custom_domino_legends.Rd
@@ -16,6 +16,7 @@ b3edb88bc71834c2181d238373d1d9ae *man/order_cat_b.Rd
 2410c62160d1514598af89a0d57557c5 *man/perform_clustering.Rd
 3a2de25d4dbd4087fb7705120adf678a *man/prepare_box_data.Rd
 133e307c13bc846f6e0c81181228f6cc *man/prepare_plot_data.Rd
+8288c2cab077c074b9d1a6eb277e8ea7 *man/prepare_simple_box_data.Rd
 61134b1d3ec087952a291860d623cdbd *tests/factor_df_test.R
-2c2dc8b71f8bd99e0964902443633eb2 *tests/test_diceplots.R
+b96b948caae4b731ee3fd0120643ed9d *tests/test_diceplots.R
 855494244ea90efe8ab38b639deb867b *tests/test_reordering_diceplot.R
