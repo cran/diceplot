@@ -14,6 +14,17 @@ geom_dice_sf(
   rectangle_padding = 0.05,
   ...
 )
+
+geom_dice_sf(
+  sf_data,
+  dice_value_col = "dice",
+  face_color = NULL,
+  dice_color = "white",
+  dice_size = 3,
+  dot_size = NULL,
+  rectangle_padding = 0.05,
+  ...
+)
 }
 \arguments{
 \item{sf_data}{An sf object containing the spatial features.}
@@ -38,12 +49,36 @@ proportion of dice_size. Default is 0.05.}
 }
 \value{
 A list of ggplot2 layers (rectangle layer and dots layer).
+
+A list of ggplot2 layers (rectangle layer and dots layer).
 }
 \description{
 Creates a ggplot2 layer that places dice representations on spatial features
 in an sf object. The dice values are determined by a column in the sf object.
+
+Creates a ggplot2 layer that places dice representations on spatial features
+in an sf object. The dice values are determined by a column in the sf object.
 }
 \examples{
+\dontrun{
+library(ggplot2)
+library(sf)
+
+# Create sample sf data with dice values
+nc <- st_read(system.file("shape/nc.shp", package = "sf"))
+nc$dice <- sample(1:6, nrow(nc), replace = TRUE)
+
+# Basic plot with dice
+ggplot(nc) + 
+  geom_sf() + 
+  geom_dice_sf(sf_data = nc)
+  
+# Customized dice
+ggplot(nc) + 
+  geom_sf() + 
+  geom_dice_sf(sf_data = nc, dice_color = "lightblue", dice_size = 5)
+}
+
 \dontrun{
 library(ggplot2)
 library(sf)

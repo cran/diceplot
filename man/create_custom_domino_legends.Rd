@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{create_custom_domino_legends}
 \alias{create_custom_domino_legends}
-\title{Create custom legends for the domino plot}
+\title{Create custom legends for a domino plot}
 \usage{
 create_custom_domino_legends(
   contrast_levels,
@@ -15,36 +15,41 @@ create_custom_domino_legends(
   size_scale_name,
   min_dot_size,
   max_dot_size,
-  legend_text_size = 8
+  size_limits = NULL,
+  size_breaks = NULL,
+  legend_text_size = 8,
+  p_label_formatter = function(lp) sprintf("\%.2g", 10^-lp)
 )
 }
 \arguments{
-\item{contrast_levels}{A character vector of contrast level names.}
+\item{contrast_levels}{Character vector of contrast level names.}
 
-\item{var_positions}{A data frame containing variable positions.}
+\item{var_positions}{Data frame with variable positions.}
 
-\item{var_id}{A string representing the column name for the variable identifier.}
+\item{var_id}{Column name for the variable identifier.}
 
-\item{contrast}{A string representing the column name for the contrast variable.}
+\item{contrast}{Column name for the contrast variable.}
 
-\item{logfc_colors}{A named vector specifying the colors for the log fold change scale.}
+\item{logfc_colors}{Named vector with "low", "mid", "high" colours.}
 
-\item{logfc_limits}{A numeric vector of length 2 specifying the limits for the log fold change color scale.}
+\item{logfc_limits}{Numeric vector (length 2) for logFC scale limits.}
 
-\item{color_scale_name}{A string specifying the name of the color scale in the legend.}
+\item{color_scale_name}{Title for the logFC colour legend.}
 
-\item{size_scale_name}{A string specifying the name of the size scale in the legend.}
+\item{size_scale_name}{Title for the p-value size legend.}
 
-\item{min_dot_size}{A numeric value indicating the minimum dot size.}
+\item{min_dot_size, max_dot_size}{Numeric dot-size range.}
 
-\item{max_dot_size}{A numeric value indicating the maximum dot size.}
+\item{size_limits, size_breaks}{Passed to \code{scale_size_continuous()}.}
 
-\item{legend_text_size}{A numeric value indicating the text size for the legend.}
+\item{legend_text_size}{Base font size for legend text.}
+
+\item{p_label_formatter}{A function used to format the size legend labels (typically for p-values). Default is \code{function(lp) sprintf("\%.2g", 10^-lp)}.}
 }
 \value{
-A ggplot object containing custom legends.
+A combined \code{ggplot} object with three aligned legends.
 }
 \description{
-Create custom legends for the domino plot
+Create custom legends for a domino plot
 }
 \keyword{internal}
