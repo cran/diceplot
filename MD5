@@ -1,10 +1,11 @@
-f51b07f9d31d26438e17efbee3b7d813 *DESCRIPTION
+52da09548557239275e17ced04a8b94c *DESCRIPTION
 465b33f31343f3cba729c7becc9b1204 *LICENSE
 30d244fd7bc216c8d9e3584d0cf967e4 *NAMESPACE
 baa7c8533681cc56fb27b8d4ba4da9a4 *R/dice_facet.R
 82aa89c3533931ee384921b614a641c8 *R/diceplot.R
 dee411927c03de6785940f2e0c5e9e3e *R/dominoplot.R
 7e692e6d111c55f7ec4d7c9f5811badd *R/utils.R
+f20a53e8ac87d7449e51f80b3f792e3a *R/zzz.R
 0fa088c2cb606b7fe956f7b94dda44bb *inst/CITATION
 edfbec3c6769ea7c3777cb0458ce09a2 *man/calculate_dot_size.Rd
 13355bfd1b3ba96dc1f4ab613b5c2e27 *man/create_custom_domino_legends.Rd
